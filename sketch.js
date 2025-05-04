@@ -15,21 +15,19 @@ let newHighHeadValue;
 //noise values
 let xNoise = 0;
 let yNoise = 0;
+let noiseVector;
 let addValue = 0;
 
-let offsetValue = 30;
+let points = [];
+
 function preload() {
-  song = loadSound("Da Funk.mp3");
+  song = loadSound("Daft Punk Rollin.mp3");
 }
 
 function setup() {
-  createCanvas(640, 640);
+  createCanvas(windowWidth , windowHeight-25);
   ellipseMode(CENTER)
-  createP("Spectrum Analyzer");
-  sliderSpectrum = createSlider(0,64 );
-  createP("Spectrum peak value");
-  sliderPeakValue = createSlider(0,255 );
-
+  background(bgColor);
   addValue = random(0, 100);
   
   colorMode(HSB);
@@ -52,38 +50,53 @@ function toggleSong() {
 }
 
 function draw() {
-  background(bgColor);
-  offsetValue= round(map(sliderPeakValue.value(), 0, 255, 0, 80));
+  
   spectrum = fft.analyze();
-  let spectrumHerz = spectrum[sliderSpectrum.value()];
-  let circleSize = map(spectrumHerz, 0, 255, 0, 100);
+  let spectrumHerz = spectrum[33];
+  let circleSize = map(spectrumHerz, 0, 255, 0, 10);
 
   oldRangeValue = newRangeValue;
   newRangeValue = spectrumHerz;
-  // if(abs(oldRangeValue-newRangeValue) > offsetValue) {
-  //   //
-  // }
   //bass check
   prevBassValue = newBassValue;
   newBassValue = spectrum[2];
   if(abs(prevBassValue-newBassValue) > 50) {
-    bgColor = color(random(100), random(100), random(100));
+    bgColor = color(random(100,255), random(100,255), random(100.255));
+    bgColor.setAlpha(100);
+    background(bgColor);
   }
 
   //high head check
   prevHighHeadValue = newHighHeadValue;
   newHighHeadValue = spectrum[33];
+
+  noiseVector = createVector(map(noise(addValue*0.02), 0, 1,-50, width+50), map(noise ((addValue*0.02)+1000), 0, 1,-50, height+50));
+
   if(abs(prevHighHeadValue-newHighHeadValue) > 50) {
-    addValue +=100;
+    addValue +=1;
+    points.push(noiseVector);
+    
+    push();
+    noFill();
+    stroke('rgba(255, 255, 255, 0.25)');
+    beginShape();
+    strokeWeight(2);
+    for (let i = 0; i < points.length; i++) {
+      let p = points[i];
+      console.log(p.x);
+      vertex(p.x,p.y);
+    }
+    endShape();
+    pop();
   }
-  xNoise = noise(0.001 * addValue);
-  yNoise = noise(0.001 * addValue);
-  push();
-  fill(255);
-  text("Spectrum Value "+sliderSpectrum.value(), 10, 10);
-  text("Peak Value "+offsetValue, 10, 30);
-  text(abs(oldRangeValue-newRangeValue), 10, 50);
-  pop();
+
+  if(points.length >200) {
+    points.splice(0, 1);
+  }
   
-  ellipse(width/2*xNoise, height/2*yNoise, circleSize, circleSize);
+
+  
+  fill('rgba(255, 255, 255, 0.01)');
+  noStroke();
+  ellipse(xNoise, yNoise, circleSize, circleSize);
 }
